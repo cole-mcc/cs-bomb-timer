@@ -138,6 +138,7 @@ export default function App() {
             alt="CSGO bomb" 
             className="w-full h-auto max-h-[90vh]"
             onContextMenu={(e) => e.preventDefault()}
+            onTouchStart={(e) => e.preventDefault()}
             draggable={false}
           />
           
