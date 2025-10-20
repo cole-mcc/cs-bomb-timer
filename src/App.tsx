@@ -58,8 +58,13 @@ export default function App() {
 
       {/* Bomb / Explosion Display */}
       {status === BombStatus.EXPLODED ? (
-        <div className="relative w-full h-2/3 flex items-center justify-center">
-          <img src={explosionGif} alt="Explosion" className="h-full" />
+        <div className="relative flex items-center justify-center">
+          <img 
+            src={explosionGif} 
+            alt="Explosion" 
+            className="w-full h-auto max-h-[90vh]"
+            onContextMenu={(e) => e.preventDefault()}
+          />
           <button
               onClick={handleReset}
               className="absolute bottom-4 bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
@@ -68,47 +73,49 @@ export default function App() {
           </button>
         </div>
       ) : (
-        <div className="relative flex items-center justify-center">
+        <div 
+          className="relative flex items-center justify-center"
+          onMouseDown={
+            status === BombStatus.IDLE
+              ? handlePlantPointerDown
+              : status === BombStatus.PLANTED
+              ? handleDefusePointerDown
+              : undefined
+          }
+          onMouseUp={
+            status === BombStatus.PLANTING
+              ? handlePlantPointerUp
+              : status === BombStatus.DEFUSING
+              ? handleDefusePointerUp
+              : undefined
+          }
+          onMouseLeave={
+            status === BombStatus.PLANTING
+              ? handlePlantPointerUp
+              : status === BombStatus.DEFUSING
+              ? handleDefusePointerUp
+              : undefined
+          }
+          onTouchStart={
+            status === BombStatus.IDLE
+              ? handlePlantPointerDown
+              : status === BombStatus.PLANTED
+              ? handleDefusePointerDown
+              : undefined
+          }
+          onTouchEnd={
+            status === BombStatus.PLANTING
+              ? handlePlantPointerUp
+              : status === BombStatus.DEFUSING
+              ? handleDefusePointerUp
+              : undefined
+          }
+        >
           <img 
             src={bombImage} 
             alt="CSGO bomb" 
             className="w-full h-auto max-h-[90vh]"
             onContextMenu={(e) => e.preventDefault()}
-            onMouseDown={
-              status === BombStatus.IDLE
-                ? handlePlantPointerDown
-                : status === BombStatus.PLANTED
-                ? handleDefusePointerDown
-                : undefined
-            }
-            onMouseUp={
-              status === BombStatus.PLANTING
-                ? handlePlantPointerUp
-                : status === BombStatus.DEFUSING
-                ? handleDefusePointerUp
-                : undefined
-            }
-            onMouseLeave={
-              status === BombStatus.PLANTING
-                ? handlePlantPointerUp
-                : status === BombStatus.DEFUSING
-                ? handleDefusePointerUp
-                : undefined
-            }
-            onTouchStart={
-              status === BombStatus.IDLE
-                ? handlePlantPointerDown
-                : status === BombStatus.PLANTED
-                ? handleDefusePointerDown
-                : undefined
-            }
-            onTouchEnd={
-              status === BombStatus.PLANTING
-                ? handlePlantPointerUp
-                : status === BombStatus.DEFUSING
-                ? handleDefusePointerUp
-                : undefined
-            }
           />
           
           {/* Bomb timer */}

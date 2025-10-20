@@ -1,6 +1,6 @@
 export const PLANT_TIME_DEFAULT = 1000;
 export const DEFUSE_TIME_DEFAULT = 1000;
-export const BOMB_TIMER_DEFAULT = 100000;
+export const BOMB_TIMER_DEFAULT = 10000;
 
 export const BombStatus = {
     IDLE: 'idle',

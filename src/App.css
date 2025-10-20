@@ -4,3 +4,10 @@
   padding: 1rem;
   text-align: center;
 }
+
+img {
+  user-select: none;
+  -webkit-user-drag: none;
+  -webkit-touch-callout: none; 
+  pointer-events: auto;  
+}
