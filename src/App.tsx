@@ -35,28 +35,17 @@ export default function App() {
     dispatch({ type: 'COUNTDOWN_EXPIRED' })
   }
 
-  const handlePlantStart = () => {
-    if (status === BombStatus.IDLE) {
-      dispatch({ type: 'PLANT_START', time: now })
-    }
+  const handlePlantPointerDown = () => {
+    if (status === BombStatus.IDLE) dispatch({ type: 'PLANT_START', time: now })
   }
-
-  const handlePlantCancel = () => {
-    if (status === BombStatus.PLANTING) {
-      dispatch({ type: 'PLANT_CANCEL' })
-    }
+  const handlePlantPointerUp = () => {
+    if (status === BombStatus.PLANTING) dispatch({ type: 'PLANT_CANCEL' })
   }
-
-  const handleDefuseStart = () => {
-    if (status === BombStatus.PLANTED) {
-      dispatch({ type: 'DEFUSE_START', time: now })
-    }
+  const handleDefusePointerDown = () => {
+    if (status === BombStatus.PLANTED) dispatch({ type: 'DEFUSE_START', time: now })
   }
-
-  const handleDefuseCancel = () => {
-    if (status === BombStatus.DEFUSING) {
-      dispatch({ type: 'DEFUSE_CANCEL' })
-    }
+  const handleDefusePointerUp = () => {
+    if (status === BombStatus.DEFUSING) dispatch({ type: 'DEFUSE_CANCEL' })
   }
 
   const handleReset = () => {
@@ -65,83 +54,109 @@ export default function App() {
 
   return (
     <main className="flex flex-col items-center gap-4 p-4">
-      <h1 className="font-[CounterStrike] text-3xl mb-4">CSGO BOMB APP</h1>
+      <h1 className="font-[CounterStrike] text-2xl">CSGO BOMB APP</h1>
 
       {/* Bomb / Explosion Display */}
       {status === BombStatus.EXPLODED ? (
-        <img src={explosionGif} alt="Explosion" className="w-64" />
+        <div className="relative w-full h-2/3 flex items-center justify-center">
+          <img src={explosionGif} alt="Explosion" className="h-full" />
+          <button
+              onClick={handleReset}
+              className="absolute bottom-4 bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
+            >
+              Reset
+          </button>
+        </div>
       ) : (
-        <div className="relative w-48 h-48 flex items-center justify-center">
-          <img src={bombImage} alt="CSGO bomb" className="w-full h-full object-contain" />
-          {status === BombStatus.PLANTED && (
-            <div className="absolute text-white text-2xl font-bold">
-              {(bombTimeLeft / 1000).toFixed(1)}s
+        <div className="relative h-2/3 flex items-center justify-center">
+          <img 
+            src={bombImage} 
+            alt="CSGO bomb" 
+            className="w-full h-auto"
+            onMouseDown={
+              status === BombStatus.IDLE
+                ? handlePlantPointerDown
+                : status === BombStatus.PLANTED
+                ? handleDefusePointerDown
+                : undefined
+            }
+            onMouseUp={
+              status === BombStatus.PLANTING
+                ? handlePlantPointerUp
+                : status === BombStatus.DEFUSING
+                ? handleDefusePointerUp
+                : undefined
+            }
+            onMouseLeave={
+              status === BombStatus.PLANTING
+                ? handlePlantPointerUp
+                : status === BombStatus.DEFUSING
+                ? handleDefusePointerUp
+                : undefined
+            }
+            onTouchStart={
+              status === BombStatus.IDLE
+                ? handlePlantPointerDown
+                : status === BombStatus.PLANTED
+                ? handleDefusePointerDown
+                : undefined
+            }
+            onTouchEnd={
+              status === BombStatus.PLANTING
+                ? handlePlantPointerUp
+                : status === BombStatus.DEFUSING
+                ? handleDefusePointerUp
+                : undefined
+            }
+          />
+          
+          {/* Bomb timer */}
+          {(status === BombStatus.PLANTED || status === BombStatus.DEFUSING) && (
+            <div className="absolute top-[20%] left-1/2 text-black font-[AlarmClock] text-right">
+              <p className='text-xl xxs:text-2xl xs:text-3xl sm:text-4xl md:text-5xl lg:text-6xl tabular-nums'>{(bombTimeLeft / 1000).toFixed(1)}</p>
+            </div>
+          )}
+          
+          {/* Progress bars */}
+          {status === BombStatus.PLANTING && (
+            <div className="absolute bottom-4 w-48 bg-gray-700 h-2 rounded">
+              <div
+                className="bg-yellow-500 h-full rounded"
+                style={{ width: `${plantProgress * 100}%` }}
+              />
+            </div>
+          )}
+          {status === BombStatus.DEFUSING && (
+            <div className="absolute bottom-4 w-48 bg-gray-700 h-2 rounded">
+              <div
+                className="bg-blue-500 h-full rounded"
+                style={{ width: `${defuseProgress * 100}%` }}
+              />
+            </div>
+          )}
+
+          {/* Instruction overlay */}
+          {(status === BombStatus.IDLE || status === BombStatus.PLANTED) && (
+            <div className="absolute bottom-8 w-full text-center text-white pointer-events-none select-none">
+              <p>
+                {status === BombStatus.IDLE
+                  ? 'Click and hold to plant the bomb'
+                  : 'Click and hold to defuse the bomb'}
+              </p>
             </div>
           )}
         </div>
       )}
 
-      {/* Progress bars */}
-      {status === BombStatus.PLANTING && (
-        <div className="w-48 bg-gray-700 h-2 rounded">
-          <div
-            className="bg-yellow-500 h-full rounded"
-            style={{ width: `${plantProgress * 100}%` }}
-          />
-        </div>
+      {/* Reset button after defuse */}
+      {status === BombStatus.DEFUSED && (
+        <button
+          onClick={handleReset}
+          className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
+        >
+          Reset
+        </button>
       )}
-      {status === BombStatus.DEFUSING && (
-        <div className="w-48 bg-gray-700 h-2 rounded">
-          <div
-            className="bg-blue-500 h-full rounded"
-            style={{ width: `${defuseProgress * 100}%` }}
-          />
-        </div>
-      )}
-
-      {/* Buttons */}
-      <div className="flex flex-wrap justify-center gap-2 mt-4">
-        {status === BombStatus.IDLE && (
-          <button
-            onClick={handlePlantStart}
-            className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
-          >
-            Plant Bomb
-          </button>
-        )}
-        {status === BombStatus.PLANTING && (
-          <button
-            onClick={handlePlantCancel}
-            className="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700"
-          >
-            Cancel Plant
-          </button>
-        )}
-        {status === BombStatus.PLANTED && (
-          <button
-            onClick={handleDefuseStart}
-            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-          >
-            Start Defuse
-          </button>
-        )}
-        {status === BombStatus.DEFUSING && (
-          <button
-            onClick={handleDefuseCancel}
-            className="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700"
-          >
-            Cancel Defuse
-          </button>
-        )}
-        {(status === BombStatus.EXPLODED || status === BombStatus.DEFUSED) && (
-          <button
-            onClick={handleReset}
-            className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
-          >
-            Reset
-          </button>
-        )}
-      </div>
     </main>
   )
 }
