@@ -1,115 +1,137 @@
-import { useReducer } from 'react'
-import bombImage from './assets/images/csgo-bomb.webp'
-import explosionGif from './assets/images/explosion.gif'
-import './App.css'
+import { useState, useEffect } from "react";
+import bombImage from "./assets/images/csgo-bomb.webp";
+import explosionGif from "./assets/images/explosion.gif";
+import GameOver from "./components/GameOver";
+import SettingsOverlay from "./components/SettingsOverlay";
 
-import {
-  bombReducer,
-  createInitialMachine,
-  BombStatus,
-  getPlantProgress,
-  getDefuseProgress,
-  getBombTimeLeft,
-} from './utils/stateMachine'
-import { useAnimationFrame } from './hooks/useAnimationFrame'
+export const BombStatus = {
+    IDLE: 'idle',
+    PLANTING: 'planting',
+    PLANTED: 'planted',
+    DEFUSING: 'defusing',
+    DEFUSED: 'defused',
+    EXPLODED: 'exploded',
+} as const;
+
+export type BombStatus = (typeof BombStatus)[keyof typeof BombStatus];
 
 export default function App() {
-  const [machine, dispatch] = useReducer(bombReducer, createInitialMachine())
-  const now = useAnimationFrame(true)
+  const [status, setStatus] = useState<BombStatus>(BombStatus.IDLE);
+  const [settings, setSettings] = useState({
+    plantTime: 1000,
+    defuseTime: 1000,
+    bombTimer: 10000,
+  });
+  const [plantedAt, setPlantedAt] = useState<number | null>(null);
+  const [actionStart, setActionStart] = useState<number | null>(null);
+  const [now, setNow] = useState(Date.now());
+  const [showExplosion, setShowExplosion] = useState(false);
 
-  const { status, context } = machine
-  const plantProgress = getPlantProgress(context, now)
-  const defuseProgress = getDefuseProgress(context, now)
-  const bombTimeLeft = getBombTimeLeft(context, now)
+  // Simple ticking clock
+  useEffect(() => {
+    const id = requestAnimationFrame(function tick() {
+      setNow(Date.now());
+      requestAnimationFrame(tick);
+    });
+    return () => cancelAnimationFrame(id);
+  }, []);
 
-  // Check for state transitions (e.g. planting done, defusing done, bomb explode)
-  if (status === BombStatus.PLANTING && plantProgress >= 1) {
-    dispatch({ type: 'PLANT_COMPLETE', time: now })
-  }
+  const bombTimeLeft = plantedAt
+    ? Math.max(0, settings.bombTimer - (now - plantedAt))
+    : settings.bombTimer;
 
-  if (status === BombStatus.DEFUSING && defuseProgress >= 1) {
-    dispatch({ type: 'DEFUSE_COMPLETE' })
-  }
+  const plantProgress = actionStart
+    ? Math.min(1, (now - actionStart) / settings.plantTime)
+    : 0;
 
-  if (status === BombStatus.PLANTED && bombTimeLeft <= 0) {
-    dispatch({ type: 'COUNTDOWN_EXPIRED' })
-  }
+  const defuseProgress = actionStart
+    ? Math.min(1, (now - actionStart) / settings.defuseTime)
+    : 0;
 
-  const handlePlantPointerDown = () => {
-    if (status === BombStatus.IDLE) dispatch({ type: 'PLANT_START', time: now })
-  }
-  const handlePlantPointerUp = () => {
-    if (status === BombStatus.PLANTING) dispatch({ type: 'PLANT_CANCEL' })
-  }
-  const handleDefusePointerDown = () => {
-    if (status === BombStatus.PLANTED) dispatch({ type: 'DEFUSE_START', time: now })
-  }
-  const handleDefusePointerUp = () => {
-    if (status === BombStatus.DEFUSING) dispatch({ type: 'DEFUSE_CANCEL' })
-  }
+  // Handle explosion
+  useEffect(() => {
+    if ((status === BombStatus.PLANTED || status === BombStatus.DEFUSING)  && bombTimeLeft <= 0) {
+      setStatus("exploded");
+      setPlantedAt(null);
+      setActionStart(null);
+    }
 
-  const handleReset = () => {
-    dispatch({ type: 'RESET' })
-  }
+    setShowExplosion(true);
+    const timeout = setTimeout(() => {
+      setShowExplosion(false);
+    }, 3000);
+
+    return () => clearTimeout(timeout); // clean up if component unmounts
+  }, [bombTimeLeft, status]);
+
+  // Handle plant completion
+  useEffect(() => {
+    if (status === "planting" && plantProgress >= 1) {
+      setStatus("planted");
+      setPlantedAt(now);
+      setActionStart(null);
+    }
+  }, [plantProgress, status, now]);
+
+  // Handle defuse completion
+  useEffect(() => {
+    if (status === "defusing" && defuseProgress >= 1 && bombTimeLeft > 0) {
+      setStatus("defused");
+      setPlantedAt(null);
+      setActionStart(null);
+    }
+  }, [defuseProgress, status, bombTimeLeft]);
+
+  const handlePointerDown = () => {
+    if (status === "idle") {
+      setStatus("planting");
+      setActionStart(now);
+    } else if (status === "planted") {
+      setStatus("defusing");
+      setActionStart(now);
+    }
+  };
+
+  const handlePointerUp = () => {
+    if (status === "planting") {
+      setStatus("idle");
+      setActionStart(null);
+    } else if (status === "defusing") {
+      setStatus("planted");
+      setActionStart(null);
+    }
+  };
+
+  const reset = () => {
+    setStatus("idle");
+    setPlantedAt(null);
+    setActionStart(null);
+  };
 
   return (
     <main className="flex flex-col items-center">
       <h1 className="font-[CounterStrike] text-2xl">CSGO BOMB APP</h1>
 
       {/* Bomb / Explosion Display */}
-      {status === BombStatus.EXPLODED ? (
+      {(status === BombStatus.EXPLODED && showExplosion) && (
         <div className="relative flex items-center justify-center">
           <img 
             src={explosionGif} 
             alt="Explosion" 
-            className="w-full h-auto max-h-[90vh]"
+            className="explosion"
             onContextMenu={(e) => e.preventDefault()}
           />
-          <button
-              onClick={handleReset}
-              className="absolute bottom-4 bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
-            >
-              Reset
-          </button>
         </div>
-      ) : (
+      )}
+      
+      {status !== BombStatus.EXPLODED && (
         <div 
           className="relative flex items-center justify-center"
-          onMouseDown={
-            status === BombStatus.IDLE
-              ? handlePlantPointerDown
-              : status === BombStatus.PLANTED
-              ? handleDefusePointerDown
-              : undefined
-          }
-          onMouseUp={
-            status === BombStatus.PLANTING
-              ? handlePlantPointerUp
-              : status === BombStatus.DEFUSING
-              ? handleDefusePointerUp
-              : undefined
-          }
-          onMouseLeave={
-            status === BombStatus.PLANTING
-              ? handlePlantPointerUp
-              : status === BombStatus.DEFUSING
-              ? handleDefusePointerUp
-              : undefined
-          }
-          onTouchStart={
-            status === BombStatus.IDLE
-              ? handlePlantPointerDown
-              : status === BombStatus.PLANTED
-              ? handleDefusePointerDown
-              : undefined
-          }
-          onTouchEnd={
-            status === BombStatus.PLANTING
-              ? handlePlantPointerUp
-              : status === BombStatus.DEFUSING
-              ? handleDefusePointerUp
-              : undefined
-          }
+          onMouseDown={handlePointerDown}
+          onMouseUp={handlePointerUp}
+          onMouseLeave={handlePointerUp}
+          onTouchStart={handlePointerDown}
+          onTouchEnd={handlePointerUp}
         >
           <img 
             src={bombImage} 
@@ -120,7 +142,7 @@ export default function App() {
           
           {/* Bomb timer */}
           {(status === BombStatus.PLANTED || status === BombStatus.DEFUSING) && (
-            <div className="absolute top-[18%] left-[44%] md:left-[43%] text-black font-[AlarmClock] text-right">
+            <div className="absolute top-[18%] left-[16%] xxs:left-[21%] xs:left-[28%] sm:left-[34%] md:left-[38%] text-black font-[AlarmClock] text-right w-[7rem]">
               <p className='text-xl xxs:text-2xl xs:text-3xl sm:text-4xl md:text-5xl tabular-nums'>{(bombTimeLeft / 1000).toFixed(1)}</p>
             </div>
           )}
@@ -156,15 +178,25 @@ export default function App() {
         </div>
       )}
 
-      {/* Reset button after defuse */}
-      {status === BombStatus.DEFUSED && (
-        <button
-          onClick={handleReset}
-          className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
-        >
-          Reset
-        </button>
+      {/* Game over screen */}
+      {(status === BombStatus.DEFUSED || status === BombStatus.EXPLODED) && (
+        <GameOver
+          message={
+            status === BombStatus.EXPLODED
+              ? "Bomb Exploded - Terrorists Win"
+              : "Bomb Defused - Counter Terrorists Win"
+          }
+          onReset={reset}
+        />
       )}
+
+      {/* Settings overlay at the bottom of the screen */}
+      <SettingsOverlay
+        plantTime={settings.plantTime}
+        defuseTime={settings.defuseTime}
+        bombTimer={settings.bombTimer}
+        onChange={setSettings}
+      />
     </main>
   )
 }

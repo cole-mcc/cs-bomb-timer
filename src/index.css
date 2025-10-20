@@ -13,10 +13,10 @@
 }
 
 @theme {
-  --breakpoint-xxs: 18rem;
-  --breakpoint-xs: 20rem;
-  --breakpoint-sm: 24rem;
-  --breakpoint-md: 28rem;
+  --breakpoint-xxs: 16rem;
+  --breakpoint-xs: 19rem;
+  --breakpoint-sm: 22rem;
+  --breakpoint-md: 26rem;
 }
 
 :root {
@@ -73,4 +73,15 @@ button:focus-visible {
   button {
     background-color: #f9f9f9;
   }
+}
+
+.explosion {
+  margin-top: 15vh;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: scale(2.6);
+  transform-origin: center;
+  pointer-events: none;
 }
