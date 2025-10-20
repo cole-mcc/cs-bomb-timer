@@ -4,18 +4,19 @@
   font-family: "CounterStrike";
   src: local("CounterStrike"),
     url("./assets/fonts/cs_regular.ttf") format("truetype");
+}
 
+@font-face {
   font-family: "AlarmClock";
   src: local("AlarmClock"),
     url("./assets/fonts/alarm_clock.ttf") format("truetype");
 }
 
 @theme {
-  --breakpoint-xxs: 22rem;
-  --breakpoint-xs: 28rem;
-  --breakpoint-sm: 32rem;
-  --breakpoint-md: 38rem;
-  --breakpoint-lg: 44rem;
+  --breakpoint-xxs: 18rem;
+  --breakpoint-xs: 20rem;
+  --breakpoint-sm: 24rem;
+  --breakpoint-md: 28rem;
 }
 
 :root {

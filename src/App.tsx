@@ -53,7 +53,7 @@ export default function App() {
   }
 
   return (
-    <main className="flex flex-col items-center gap-4 p-4">
+    <main className="flex flex-col items-center">
       <h1 className="font-[CounterStrike] text-2xl">CSGO BOMB APP</h1>
 
       {/* Bomb / Explosion Display */}
@@ -68,11 +68,12 @@ export default function App() {
           </button>
         </div>
       ) : (
-        <div className="relative h-2/3 flex items-center justify-center">
+        <div className="relative flex items-center justify-center">
           <img 
             src={bombImage} 
             alt="CSGO bomb" 
-            className="w-full h-auto"
+            className="w-full h-auto max-h-[90vh]"
+            onContextMenu={(e) => e.preventDefault()}
             onMouseDown={
               status === BombStatus.IDLE
                 ? handlePlantPointerDown
@@ -112,8 +113,8 @@ export default function App() {
           
           {/* Bomb timer */}
           {(status === BombStatus.PLANTED || status === BombStatus.DEFUSING) && (
-            <div className="absolute top-[20%] left-1/2 text-black font-[AlarmClock] text-right">
-              <p className='text-xl xxs:text-2xl xs:text-3xl sm:text-4xl md:text-5xl lg:text-6xl tabular-nums'>{(bombTimeLeft / 1000).toFixed(1)}</p>
+            <div className="absolute top-[18%] left-[44%] md:left-[43%] text-black font-[AlarmClock] text-right">
+              <p className='text-xl xxs:text-2xl xs:text-3xl sm:text-4xl md:text-5xl tabular-nums'>{(bombTimeLeft / 1000).toFixed(1)}</p>
             </div>
           )}
           
@@ -137,11 +138,11 @@ export default function App() {
 
           {/* Instruction overlay */}
           {(status === BombStatus.IDLE || status === BombStatus.PLANTED) && (
-            <div className="absolute bottom-8 w-full text-center text-white pointer-events-none select-none">
-              <p>
+            <div className="absolute bottom-20 w-full text-center text-white pointer-events-none select-none">
+              <p className='text-lg font-bold'>
                 {status === BombStatus.IDLE
-                  ? 'Click and hold to plant the bomb'
-                  : 'Click and hold to defuse the bomb'}
+                  ? 'Tap + Hold to plant bomb'
+                  : 'Tap + Hold to defuse bomb'}
               </p>
             </div>
           )}
