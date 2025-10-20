@@ -18,9 +18,9 @@ export type BombStatus = (typeof BombStatus)[keyof typeof BombStatus];
 export default function App() {
   const [status, setStatus] = useState<BombStatus>(BombStatus.IDLE);
   const [settings, setSettings] = useState({
-    plantTime: 1000,
-    defuseTime: 1000,
-    bombTimer: 10000,
+    plantTime: 4000,
+    defuseTime: 8000,
+    bombTimer: 45000,
   });
   const [plantedAt, setPlantedAt] = useState<number | null>(null);
   const [actionStart, setActionStart] = useState<number | null>(null);
@@ -138,6 +138,7 @@ export default function App() {
             alt="CSGO bomb" 
             className="w-full h-auto max-h-[90vh]"
             onContextMenu={(e) => e.preventDefault()}
+            draggable={false}
           />
           
           {/* Bomb timer */}
